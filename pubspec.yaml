@@ -24,7 +24,7 @@ dependencies:
   dio: ^5.4.3
 
   # 本地存储
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.3.4
 
   # JSON序列化
   json_annotation: ^4.9.0
