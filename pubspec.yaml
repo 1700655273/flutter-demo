@@ -1,0 +1,47 @@
+name: flutter_demo
+description: Flutter 主流框架 Demo - Clean Architecture + Riverpod + GoRouter + Dio
+
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.2
+
+  # 状态管理 - Riverpod
+  flutter_riverpod: ^2.1.1
+
+  # 路由管理 - GoRouter
+  go_router: ^4.5.1
+
+  # 网络请求 - Dio
+  dio: ^4.0.6
+
+  # 本地存储
+  shared_preferences: ^2.0.15
+
+  # JSON序列化
+  json_annotation: ^4.6.0
+
+  # 国际化
+  flutter_localizations:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+  build_runner: ^2.2.0
+  json_serializable: ^6.3.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
