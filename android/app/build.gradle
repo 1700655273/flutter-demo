@@ -15,11 +15,7 @@ android {
     }
 
     kotlinOptions {
-        jvmTarget = "17"
-    }
-
-    sourceSets {
-        main.java.srcDirs += 'src/main/kotlin'
+        jvmTarget = JavaVersion.VERSION_17
     }
 
     defaultConfig {
@@ -41,6 +37,4 @@ flutter {
     source = "../.."
 }
 
-dependencies {
-    implementation "androidx.core:core-ktx:1.12.0"
-}
+dependencies {}
