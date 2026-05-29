@@ -23,11 +23,18 @@ dependencies:
   # 网络请求 - Dio
   dio: ^5.4.3
 
+  # 网络日志 - 控制台美化
+  pretty_dio_logger: ^1.4.0
+
   # 本地存储
   shared_preferences: ^2.3.4
 
   # JSON序列化
   json_annotation: ^4.9.0
+
+  # 远程日志 - Sentry
+  sentry_flutter: ^8.0.0
+  sentry_dio: ^8.0.0
 
   # 国际化
   flutter_localizations:

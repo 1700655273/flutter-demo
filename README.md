@@ -21,6 +21,9 @@
 | 状态管理 | `flutter_riverpod` | ^2.5.1 | Provider + StateNotifier 模式 |
 | 路由管理 | `go_router` | ^14.2.0 | StatefulShellRoute 声明式路由 |
 | 网络请求 | `dio` | ^5.4.3 | DioException + 拦截器 + 统一错误处理 |
+| 网络调试 | `pretty_dio_logger` | ^1.4.0 | 控制台美化日志（Debug 模式） |
+| 网络调试 | OkHttp Profiler 桥接 | — | MethodChannel → Log.v() 写入 Logcat |
+| 远程日志 | `sentry_flutter` + `sentry_dio` | ^8.0.0 | 错误追踪 + 网络请求追踪 + 结构化日志 |
 | 本地存储 | `shared_preferences` | ^2.3.4 | KV 持久化存储 |
 | JSON 序列化 | `json_annotation` | ^4.9.0 | 数据模型注解 |
 | UI 框架 | Material 3 | — | 动态色彩设计系统 |
@@ -187,3 +190,76 @@ flutter build web --release
 | Maven 中央 | `maven.aliyun.com/repository/central` |
 | Gradle 插件 | `maven.aliyun.com/repository/gradle-plugin` |
 | Flutter 资源 | `storage.flutter-io.cn`（环境变量 `PUB_HOSTED_URL`） |
+
+## 网络调试工具
+
+### 1. OkHttp Profiler（Android Studio 集成）
+
+Flutter Dio 请求默认不会出现在 Android Studio 的 OkHttp Profiler 中（因为不走 Android OkHttp 层）。本项目通过 **MethodChannel 桥接**，将 Dio 请求数据按 OkHttp Profiler 的 Logcat 协议写入，使其在 Profiler 中可见。
+
+**原理：**
+```
+Dio Interceptor → MethodChannel → Android Log.v() → Logcat → OkHttp Profiler 插件读取
+```
+
+**使用方式：** 无需额外配置，运行 Android 版本后打开 AS 的 OkHttp Profiler 即可看到网络请求。
+
+**涉及文件：**
+- `lib/core/network/okhttp_profiler_interceptor.dart` — Dio 拦截器
+- `android/app/.../MainActivity.kt` — MethodChannel 接收端
+
+### 2. Pretty Dio Logger（控制台美化日志）
+
+Debug 模式下自动在控制台输出格式化的网络请求日志：
+
+```
+┌───────────────────────────────────────────────────
+│ POST /users
+├───────────────────────────────────────────────────
+│ Content-Type: application/json
+│ Accept: application/json
+├───────────────────────────────────────────────────
+│ {"name": "test"}
+├───────────────────────────────────────────────────
+│ 200 OK (325ms)
+│ [{"id":1,"name":"Leanne Graham"}]
+└───────────────────────────────────────────────────
+```
+
+仅在 `kDebugMode` 下启用，Release 版本不会输出。
+
+### 3. Sentry 远程日志（后台按日期查看）
+
+集成 Sentry 实现远程日志查看，支持按日期筛选：
+
+**Sentry 免费版额度：**
+| 项目 | 额度 |
+|------|------|
+| 错误事件 | 5,000 条/月 |
+| 网络请求追踪 (Spans) | 500 万条/月 |
+| 结构化日志 | 5 GB/月 |
+| 保留期 | 30 天 |
+
+**配置步骤：**
+1. 在 [sentry.io](https://sentry.io) 注册免费账号并创建 Flutter 项目
+2. 获取 DSN（格式：`https://xxx@oxxx.ingest.sentry.io/xxx`）
+3. 替换 `lib/core/constants/app_constants.dart` 中的 `sentryDsn`
+
+```dart
+// 替换为你的 Sentry DSN
+static const String sentryDsn = 'https://yourPublicKey@yourOrg.ingest.sentry.io/yourProjectId';
+```
+
+**Sentry 控制台功能：**
+- 📊 **Tracing** — 查看所有网络请求耗时、状态码
+- 📝 **Structured Logs** — 按日期/级别/关键词筛选日志
+- 🔗 **Breadcrumbs** — 查看请求上下文链路
+- ❌ **Errors** — 错误自动关联网络请求
+
+**Dio 拦截器链（按执行顺序）：**
+```
+1. OkHttpProfilerInterceptor  → Logcat 写入（仅 Android）
+2. SentryTracingInterceptor   → Sentry 远程追踪
+3. _ErrorInterceptor          → 统一错误处理
+4. PrettyDioLogger            → 控制台美化（仅 Debug）
+```

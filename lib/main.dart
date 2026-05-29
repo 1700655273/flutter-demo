@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/theme/theme_provider.dart';
 import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
+import 'core/constants/app_constants.dart';
 
 void main() async {
   // 确保 Flutter 绑定初始化
@@ -12,8 +14,27 @@ void main() async {
   // 初始化 SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
 
+  // 初始化 Sentry（远程日志 & 错误追踪）
+  // 如果 Sentry DSN 未配置（仍为占位符），则跳过初始化
+  final isSentryConfigured =
+      !AppConstants.sentryDsn.contains('examplePublicKey');
+
+  if (isSentryConfigured) {
+    await SentryFlutter.init(
+      (options) {
+        options.dsn = AppConstants.sentryDsn;
+        options.tracesSampleRate = 1.0; // 100% 追踪采样率（生产环境可降低）
+        options.profilesSampleRate = 1.0;
+      },
+      appRunner: () => _runApp(sharedPreferences),
+    );
+  } else {
+    _runApp(sharedPreferences);
+  }
+}
+
+void _runApp(SharedPreferences sharedPreferences) {
   runApp(
-    // Riverpod 根节点 - 覆盖 SharedPreferences Provider
     ProviderScope(
       overrides: [
         sharedPreferencesProvider.overrideWithValue(sharedPreferences),
@@ -46,6 +67,11 @@ class MyApp extends ConsumerWidget {
       routerDelegate: router.routerDelegate,
       routeInformationParser: router.routeInformationParser,
       routeInformationProvider: router.routeInformationProvider,
+
+      // ─── Sentry 导航追踪 ───
+      navigatorObservers: [
+        SentryNavigatorObserver(),
+      ],
     );
   }
 }

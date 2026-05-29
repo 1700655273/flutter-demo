@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pretty_dio_logger/pretty_dio_logger.dart';
+import 'package:sentry_dio/sentry_dio.dart';
 import '../constants/app_constants.dart';
+import 'okhttp_profiler_interceptor.dart';
 
 /// Dio 网络客户端封装
 class DioClient {
@@ -20,11 +24,36 @@ class DioClient {
       ),
     );
 
-    // 添加拦截器
+    // ─── 拦截器链 ───
     _dio.interceptors.addAll([
-      _LogInterceptor(),
+      // 1. OkHttp Profiler 桥接（仅 Android，让请求出现在 AS Profiler 中）
+      if (Platform.isAndroid) OkHttpProfilerInterceptor(),
+
+      // 2. Sentry 追踪（自动上报网络请求到 Sentry 后台）
+      _sentryInterceptor(),
+
+      // 3. 错误处理
       _ErrorInterceptor(),
+
+      // 4. 控制台美化日志（仅 Debug 模式）
+      if (kDebugMode)
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: false,
+          responseBody: true,
+          error: true,
+          compact: true,
+          maxWidth: 90,
+        ),
     ]);
+  }
+
+  /// 创建 Sentry Dio 拦截器
+  Interceptor _sentryInterceptor() {
+    return SentryTracingInterceptor(
+      // Sentry 初始化后自动关联
+    );
   }
 
   /// GET 请求
@@ -83,27 +112,6 @@ class DioClient {
       queryParameters: queryParameters,
       options: options,
     );
-  }
-}
-
-/// 日志拦截器
-class _LogInterceptor extends Interceptor {
-  @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    debugPrint('┌── HTTP REQUEST ── ${options.method} ${options.uri}');
-    handler.next(options);
-  }
-
-  @override
-  void onResponse(Response response, ResponseInterceptorHandler handler) {
-    debugPrint('├── HTTP RESPONSE ── ${response.statusCode}');
-    handler.next(response);
-  }
-
-  @override
-  void onError(DioException err, ErrorInterceptorHandler handler) {
-    debugPrint('└── HTTP ERROR ── ${err.type} ${err.message}');
-    handler.next(err);
   }
 }
 
