@@ -2,72 +2,160 @@
 
 基于 **Clean Architecture** 架构，集成 Flutter 主流开发框架的示例项目。
 
+## 环境要求
+
+| 工具 | 最低版本 |
+|------|---------|
+| Flutter | 3.27.0+ |
+| Dart | 3.3.0+ |
+| Gradle | 8.9 |
+| AGP | 8.7.0 |
+| Kotlin | 2.1.0 |
+| Java | 17+ |
+| Android minSdk | 21 |
+
 ## 技术栈
 
-| 技术 | 包名 | 说明 |
-|------|-------|------|
-| 状态管理 | `flutter_riverpod` | Provider + StateNotifier 模式 |
-| 路由管理 | `go_router` | 声明式路由 + ShellRoute |
-| 网络请求 | `dio` | 拦截器 + 统一错误处理 |
-| 本地存储 | `shared_preferences` | KV 持久化存储 |
-| UI 框架 | Material 3 | 动态色彩设计系统 |
+| 技术 | 包名 | 版本 | 说明 |
+|------|-------|------|------|
+| 状态管理 | `flutter_riverpod` | ^2.5.1 | Provider + StateNotifier 模式 |
+| 路由管理 | `go_router` | ^14.2.0 | StatefulShellRoute 声明式路由 |
+| 网络请求 | `dio` | ^5.4.3 | DioException + 拦截器 + 统一错误处理 |
+| 本地存储 | `shared_preferences` | ^2.3.4 | KV 持久化存储 |
+| JSON 序列化 | `json_annotation` | ^4.9.0 | 数据模型注解 |
+| UI 框架 | Material 3 | — | 动态色彩设计系统 |
+| 构建工具 | Gradle 8.9 + AGP 8.7 | — | 声明式插件 + includeBuild |
 
 ## 项目结构
 
 ```
 lib/
-├── main.dart                          # 应用入口
-├── core/                               # 核心层
-│   ├── theme/                          # 主题配置 + Provider
-│   ├── network/                        # Dio 网络封装
-│   ├── router/                        # GoRouter 路由配置
-│   ├── constants/                      # 常量定义
-│   └── utils/                          # 工具类
-├── features/                           # 功能模块
-│   ├── home/                           # 首页（轮播图 + 功能入口）
-│   ├── counter/                        # 计数器（Riverpod 状态管理）
-│   ├── users/                          # 用户列表（Clean Architecture）
-│   │   ├── data/                       # 数据层
-│   │   │   ├── models/                 # 数据模型（JSON 序列化）
-│   │   │   └── datasources/            # 远程数据源
-│   │   ├── domain/                     # 领域层
-│   │   │   └── entities/               # 业务实体
-│   │   └── presentation/               # 展示层
-│   │       ├── pages/                   # 页面
-│   │       └── providers/               # 状态管理
-│   ├── animation/                      # 动画展示
-│   └── settings/                       # 设置（主题切换）
-└── shared/                             # 共享组件
-    └── widgets/                        # 通用组件
+├── main.dart                              # 应用入口（ProviderScope + MaterialApp.router）
+├── core/                                  # 核心层
+│   ├── theme/                             # 主题配置
+│   │   ├── app_theme.dart                 #   Material 3 亮色/暗色主题定义
+│   │   └── theme_provider.dart            #   Riverpod 主题状态管理 + SharedPreferences 持久化
+│   ├── network/                           # 网络封装
+│   │   └── dio_client.dart               #   Dio 5 封装（日志拦截器 + 错误拦截器）
+│   ├── router/                           # 路由配置
+│   │   └── app_router.dart                #   GoRouter 14 + StatefulShellRoute 底部导航
+│   ├── constants/                         # 常量定义
+│   │   └── app_constants.dart             #   API 地址、超时时间、存储 Key
+│   └── utils/                             # 工具类
+│       └── snack_bar_util.dart            #   统一 SnackBar 提示
+├── features/                              # 功能模块（按功能划分）
+│   ├── home/                              # 首页
+│   │   ├── presentation/pages/            #   轮播横幅 + 功能入口 + 架构图示
+│   │   └── providers/                     #   轮播数据 Provider
+│   ├── counter/                           # 计数器
+│   │   ├── presentation/pages/            #   计数器页面 + Riverpod 概念说明
+│   │   └── providers/                     #   StateNotifier<Counter>
+│   ├── users/                             # 用户列表（Clean Architecture 三层分离）
+│   │   ├── data/                          #   ┌ 数据层
+│   │   │   ├── models/user_model.dart     #   │ JSON ↔ Entity 转换
+│   │   │   └── datasources/               #   │ 远程数据源（Dio 请求）
+│   │   ├── domain/                        #   │ 领域层
+│   │   │   └── entities/user.dart         #   │ 纯 Dart 业务实体
+│   │   └── presentation/                 #   │ 展示层
+│   │       ├── pages/users_page.dart       #   │ 四态 UI（加载/成功/错误/空）
+│   │       └── providers/                  #   │ StateNotifier + sealed UiState
+│   ├── animation/                         # 动画展示
+│   │   └── presentation/pages/            #   隐式/显式/Hero 三类动画 Tab 页
+│   └── settings/                          # 设置
+│       └── presentation/pages/            #   主题切换 + 技术栈 + 项目结构图
+└── shared/                                # 共享组件
+    └── widgets/                           #   通用 Loading / Error 组件
 ```
 
 ## 功能模块
 
-### 首页
-- 自动轮播横幅
-- 功能入口网格卡片
+### 🏠 首页
+- 自动轮播横幅（PageView + 自动滚动）
+- 功能入口网格卡片（SliverGrid）
 - Clean Architecture 三层架构图示
 
-### 计数器
-- Riverpod StateNotifier 状态管理
+### 🔢 计数器
+- **Riverpod** StateNotifier 状态管理
 - `ref.watch` / `ref.read` 使用演示
-- AnimatedSwitcher 动画计数
+- AnimatedSwitcher 数字切换动画
+- Riverpod 核心概念说明卡片
 
-### 用户列表
-- **Clean Architecture** 三层分离
-- Dio 网络请求 + JSONPlaceholder API
-- 加载/成功/错误/空 四态处理
-- 下拉刷新
+### 👥 用户列表
+- **Clean Architecture** 三层分离（Domain / Data / Presentation）
+- **Dio 5** 网络请求 + JSONPlaceholder API
+- `sealed class UiState` 四态处理（Initial / Loading / Success / Error）
+- switch 表达式模式匹配渲染
+- 用户卡片详情（公司信息 + 联系方式）
 
-### 动画展示
-- 隐式动画：AnimatedContainer / AnimatedScale / AnimatedOpacity
-- 显式动画：AnimationController + CurvedAnimation
-- Hero 过渡动画
+### 🎬 动画展示
+- **隐式动画**：AnimatedContainer / AnimatedScale / AnimatedOpacity
+- **显式动画**：AnimationController + CurvedAnimation（旋转+缩放）
+- **Hero 过渡**：共享元素页面转场
 
-### 设置
-- 亮色/暗色/跟随系统 主题切换
+### ⚙️ 设置
+- 亮色 / 暗色 / 跟随系统主题切换
 - SharedPreferences 本地持久化
-- 技术栈说明 + 项目结构图
+- 技术栈说明 + 项目结构树形图
+
+## 架构设计
+
+### Clean Architecture 分层
+
+```
+┌──────────────────────────────────────────────────────┐
+│  Presentation Layer                                  │
+│  UI Widgets + Riverpod Provider/StateNotifier       │
+│  ↓ ref.read(repositoryProvider)                     │
+├──────────────────────────────────────────────────────┤
+│  Domain Layer                                        │
+│  Entity（纯 Dart）+ Repository 抽象接口              │
+│  ↓ implemented by                                    │
+├──────────────────────────────────────────────────────┤
+│  Data Layer                                          │
+│  DataSource（Dio）+ Model（JSON 序列化）             │
+│  + Repository 实现                                   │
+└──────────────────────────────────────────────────────┘
+```
+
+**核心原则：**
+- **依赖规则**：外层依赖内层，内层不依赖外层
+- **Domain Layer** 纯 Dart，不依赖 Flutter 框架
+- **Data Layer** 实现 Domain 定义的 Repository 接口
+- **Presentation Layer** 通过 Riverpod Provider 注入 Repository
+
+### 状态管理架构
+
+```
+UiState<T> (sealed class)
+├── UiInitial<T>     → 空状态页面
+├── UiLoading<T>     → Loading 指示器
+├── UiSuccess<T>     → 数据展示
+└── UiError<T>       → 错误提示 + 重试按钮
+
+StateNotifier<UiState<T>>
+    ↑
+    │ fetchUsers() / refresh()
+    │
+UserRepository (abstract)
+    ↑ implements
+UserRepositoryImpl
+    ↑ depends on
+UserRemoteDataSource (Dio)
+```
+
+### 路由架构
+
+```
+GoRouter
+└── StatefulShellRoute.indexedStack
+    ├── Branch 0: /           → HomePage
+    ├── Branch 1: /counter    → CounterPage
+    ├── Branch 2: /users     → UsersPage
+    ├── Branch 3: /animation → AnimationPage
+    └── Branch 4: /settings  → SettingsPage
+        ↓
+    AppShell (NavigationBar)
+```
 
 ## 运行
 
@@ -75,31 +163,27 @@ lib/
 # 获取依赖
 flutter pub get
 
+# 运行 (Android)
+flutter run
+
 # 运行 (Web)
 flutter run -d chrome
 
-# 运行 (macOS)
-flutter run -d macos
+# 构建 APK
+flutter build apk --release
 
 # 构建 Web
 flutter build web --release
 ```
 
-## 架构设计
+## 国内环境配置
 
-### Clean Architecture 分层
+项目已预配置国内镜像源，避免 SSL 证书和网络问题：
 
-```
-┌─────────────────────────────────┐
-│     Presentation Layer          │  UI + Riverpod Provider
-├─────────────────────────────────┤
-│     Domain Layer                │  Entity + Repository 接口
-├─────────────────────────────────┤
-│     Data Layer                  │  DataSource + Model + Repository 实现
-└─────────────────────────────────┘
-```
-
-- **依赖规则**：外层依赖内层，内层不依赖外层
-- **Domain Layer** 纯 Dart，不依赖 Flutter
-- **Data Layer** 实现 Domain 定义的仓库接口
-- **Presentation Layer** 通过 Provider 注入 Repository
+| 配置项 | 镜像源 |
+|--------|--------|
+| Gradle 下载 | `mirrors.cloud.tencent.com/gradle` |
+| Maven 仓库 | `maven.aliyun.com/repository/google` |
+| Maven 中央 | `maven.aliyun.com/repository/central` |
+| Gradle 插件 | `maven.aliyun.com/repository/gradle-plugin` |
+| Flutter 资源 | `storage.flutter-io.cn`（环境变量 `PUB_HOSTED_URL`） |
