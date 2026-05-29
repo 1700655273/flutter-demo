@@ -2,8 +2,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/user.dart';
 import '../../data/datasources/user_remote_datasource.dart';
 
-/// 自定义异步状态 - 避免与 Riverpod 内置类型冲突
-abstract class UiState<T> {
+/// 异步状态封装
+sealed class UiState<T> {
   const UiState();
 }
 
@@ -60,7 +60,6 @@ class UserListNotifier extends StateNotifier<UiState<List<User>>> {
 
   UserListNotifier(this._repository) : super(const UiInitial());
 
-  /// 获取用户列表
   Future<void> fetchUsers() async {
     state = const UiLoading();
     try {
@@ -71,7 +70,6 @@ class UserListNotifier extends StateNotifier<UiState<List<User>>> {
     }
   }
 
-  /// 刷新
   Future<void> refresh() async {
     await fetchUsers();
   }

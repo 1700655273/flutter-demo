@@ -42,31 +42,27 @@ class _UsersPageState extends ConsumerState<UsersPage> {
   }
 
   Widget _buildBody(UiState<List<User>> state, ThemeData theme) {
-    if (state is UiInitial) {
-      return _EmptyWidget(
-        icon: Icons.cloud_outlined,
-        message: '点击刷新按钮加载数据',
-      );
-    } else if (state is UiLoading) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('加载中...'),
-          ],
+    return switch (state) {
+      UiInitial() => const _EmptyWidget(
+          icon: Icons.cloud_outlined,
+          message: '点击刷新按钮加载数据',
         ),
-      );
-    } else if (state is UiSuccess<List<User>>) {
-      return _UserList(users: state.data);
-    } else if (state is UiError) {
-      return _ErrorView(
-        message: (state as UiError).message,
-        onRetry: () => ref.read(userListProvider.notifier).refresh(),
-      );
-    }
-    return const SizedBox.shrink();
+      UiLoading() => const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('加载中...'),
+            ],
+          ),
+        ),
+      UiSuccess<List<User>>(:final data) => _UserList(users: data),
+      UiError(:final message) => _ErrorView(
+          message: message,
+          onRetry: () => ref.read(userListProvider.notifier).refresh(),
+        ),
+    };
   }
 }
 
@@ -173,7 +169,7 @@ class _UserCard extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceVariant,
+                  color: colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Column(

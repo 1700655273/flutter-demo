@@ -11,8 +11,8 @@ class DioClient {
     _dio = Dio(
       BaseOptions(
         baseUrl: AppConstants.baseUrl,
-        connectTimeout: AppConstants.connectTimeout.inMilliseconds,
-        receiveTimeout: AppConstants.receiveTimeout.inMilliseconds,
+        connectTimeout: AppConstants.connectTimeout,
+        receiveTimeout: AppConstants.receiveTimeout,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -101,7 +101,7 @@ class _LogInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
     debugPrint('└── HTTP ERROR ── ${err.type} ${err.message}');
     handler.next(err);
   }
@@ -110,18 +110,18 @@ class _LogInterceptor extends Interceptor {
 /// 错误处理拦截器
 class _ErrorInterceptor extends Interceptor {
   @override
-  void onError(DioError err, ErrorInterceptorHandler handler) {
+  void onError(DioException err, ErrorInterceptorHandler handler) {
     switch (err.type) {
-      case DioErrorType.connectTimeout:
-      case DioErrorType.sendTimeout:
-      case DioErrorType.receiveTimeout:
-        handler.next(DioError(
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        handler.next(DioException(
           requestOptions: err.requestOptions,
           error: '连接超时，请检查网络',
           type: err.type,
         ));
         break;
-      case DioErrorType.response:
+      case DioExceptionType.badResponse:
         final statusCode = err.response?.statusCode;
         String message;
         if (statusCode == 400) {
@@ -137,18 +137,18 @@ class _ErrorInterceptor extends Interceptor {
         } else {
           message = '请求失败 ($statusCode)';
         }
-        handler.next(DioError(
+        handler.next(DioException(
           requestOptions: err.requestOptions,
           error: message,
           type: err.type,
           response: err.response,
         ));
         break;
-      case DioErrorType.cancel:
+      case DioExceptionType.cancel:
         handler.next(err);
         break;
       default:
-        handler.next(DioError(
+        handler.next(DioException(
           requestOptions: err.requestOptions,
           error: '网络异常，请检查网络连接',
           type: err.type,

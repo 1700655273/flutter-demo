@@ -19,7 +19,7 @@ class AppTheme {
       scrolledUnderElevation: 2,
       backgroundColor: Color(0xFFFFFBFE),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -44,7 +44,7 @@ class AppTheme {
       scrolledUnderElevation: 2,
       backgroundColor: Color(0xFF1C1B1F),
     ),
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 1,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
